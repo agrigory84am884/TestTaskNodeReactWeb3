@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  nodejs-app:
+    build:
+      context: ./nodejs-app
+    ports:
+      - '3001:3000'
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: ${PORT:-3000}
+      DB_HOST: ${DB_HOST:-db}
+      DB_USER: ${DB_USER:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-example}
+      DB_NAME: ${DB_NAME:-mydatabase}
+      JWT_SECRET: ${JWT_SECRET:-undefined}
+      JWT_EXPIRE: ${JWT_EXPIRE:-undefined}
+    volumes:
+      - ./nodejs-app:/app
+      - ./.env:/app/.env
+    command: ${COMMAND_DEV_NODE:-npm start}
+    networks:
+      - app-network
+
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root}
+      MYSQL_DATABASE: ${DB_NAME:-mydatabase}
+    ports:
+      - '3306:3306'
+    volumes:
+      - ./db-data/data:/var/lib/mysql
+      - ./db-data/my.cnf:/etc/mysql/my.cnf 
+    networks:
+      - app-network
+
+  react-app:
+    build:
+      context: ./react-app
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./react-app:/app
+      - /app/node_modules
+      - ./.env:/app/.env
+    environment:
+      NODE_ENV: ${REACT_APP_ENV:-development}
+    command: ${COMMAND_DEV_REACT:-npm start}
+    networks:
+      - app-network
+
+volumes:
+  db-data:
+
+networks:
+  app-network:
